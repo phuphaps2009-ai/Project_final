@@ -15,14 +15,14 @@ if ($conn->connect_error) {
 // ระบบ Select Filter: รับค่าการคัดกรองบทบาท
 $selected_role = isset($_GET['role_filter']) ? $_GET['role_filter'] : 'all';
 
-// สร้าง SQL Query ตามเงื่อนไขการ Select (เรียงจากใหม่ไปเก่า)
+// สร้าง SQL Query ตามเงื่อนไขการ Select (เรียงจากเก่าไปใหม่ ORDER BY id ASC เพื่อให้คนที่เพิ่มใหม่ไปอยู่ต่อท้าย)
 if ($selected_role != 'all' && !empty($selected_role)) {
-    $stmt = $conn->prepare("SELECT * FROM users WHERE role = ? ORDER BY id DESC");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE role = ? ORDER BY id ASC");
     $stmt->bind_param("s", $selected_role);
     $stmt->execute();
     $result = $stmt->get_result();
 } else {
-    $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
+    $result = $conn->query("SELECT * FROM users ORDER BY id ASC");
 }
 ?>
 
@@ -31,7 +31,7 @@ if ($selected_role != 'all' && !empty($selected_role)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management System - Modern UI</title>
+    <title>ระบบจัดการผู้ใช้งาน</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & Prompt -->
@@ -60,7 +60,7 @@ if ($selected_role != 'all' && !empty($selected_role)) {
                     </div>
                     <div>
                         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">ระบบจัดการผู้ใช้งาน</h1>
-                        <p class="text-sm text-slate-400 mt-0.5">User Management Control Panel</p>
+                        <p class="text-sm text-slate-400 mt-0.5">แผงควบคุมและจัดการข้อมูลผู้ใช้</p>
                     </div>
                 </div>
             </div>
@@ -151,7 +151,7 @@ if ($selected_role != 'all' && !empty($selected_role)) {
                 <!-- Dynamic Bulk Delete Button & Quick Actions -->
                 <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
                     
-                    <!-- Floating Highlighted 'Delete Selected' Red Button with Badge Count -->
+                    <!-- Dynamic 'Delete Selected' Red Button -->
                     <button id="btnDeleteSelected" 
                             onclick="deleteSelected()"
                             type="button"
@@ -164,10 +164,10 @@ if ($selected_role != 'all' && !empty($selected_role)) {
                     <!-- Quick Action Buttons -->
                     <div class="flex items-center gap-1.5 text-xs font-semibold">
                         <button type="button" onclick="toggleAllCheckboxes(true)" class="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-xl bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/50 transition">
-                            Select All
+                            เลือกทั้งหมด
                         </button>
                         <button type="button" onclick="toggleAllCheckboxes(false)" class="text-slate-600 hover:text-slate-700 px-3 py-2 rounded-xl bg-slate-200/60 hover:bg-slate-200 border border-slate-300/50 transition">
-                            Clear Selection
+                            ยกเลิกการเลือก
                         </button>
                     </div>
 
@@ -192,14 +192,13 @@ if ($selected_role != 'all' && !empty($selected_role)) {
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm bg-white">
                             <?php if ($result->num_rows > 0): ?>
-                                <?php $i = 1; // เริ่มต้นนับลำดับที่ 1 ?>
+                                <?php $i = 1; ?>
                                 <?php while($row = $result->fetch_assoc()): ?>
                                     <tr class="hover:bg-blue-50/50 transition duration-150 item-row">
                                         <td class="p-4 text-center">
                                             <input type="checkbox" name="ids[]" value="<?= $row['id'] ?>" class="item-checkbox w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500/20 cursor-pointer">
                                         </td>
                                         
-                                        <!-- แสดงลำดับนับ 1, 2, 3... บนหน้าจอ -->
                                         <td class="p-4 font-semibold text-slate-400">#<?= $i++ ?></td>
                                         
                                         <td class="p-4 font-medium text-slate-900"><?= htmlspecialchars($row['name']) ?></td>
@@ -209,20 +208,20 @@ if ($selected_role != 'all' && !empty($selected_role)) {
                                         <td class="p-4">
                                             <?php if ($row['role'] == 'Admin'): ?>
                                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Admin
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> ผู้ดูแลระบบ
                                                 </span>
                                             <?php elseif ($row['role'] == 'Editor'): ?>
                                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Editor
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> ผู้แก้ไข
                                                 </span>
                                             <?php else: ?>
                                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Member
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> สมาชิก
                                                 </span>
                                             <?php endif; ?>
                                         </td>
                                         
-                                        <!-- Individual Action: Trash Button -->
+                                        <!-- Individual Action -->
                                         <td class="p-4 text-center">
                                             <button type="button" 
                                                     onclick="deleteSingle(<?= $row['id'] ?>)" 
